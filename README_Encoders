@@ -1,0 +1,37 @@
+ESE-650 Project 4
+Notes on Interpreting Wheel Encoder Data
+
+The platform, used in this project, is equipped with four magnetic
+encoders. Each encoder has two output channels with offset phase with
+respect to each other, which makes it possible to determine the
+direction of rotation (as opposed to single output encoders). A
+microcontroller is used to interpret the total of 8 channels of encoder
+pulses and for each of the four wheels, it simply counts the number of
+transitions on the encoder output channels, adding 1 or subtracting 1
+from the counter for each transition, depending on the direction of
+rotation. In other words, rotation of the wheel will trigger a state
+transition of the encoder outputs (from high to low or from low to high)
+and based on which of the two channels transitions first, the direction
+of rotation can be deduced. Also, for each such transition the
+corresponding wheel’s encoder counter is either incremented or
+decremented accordingly.
+
+As the robot moves, the microcontroller continuously updates the four
+encoder counters and when the encoder information is requested for
+processing, the latest accumulated counts are returned and the counters
+are reset back to zero. Hence, while the robot is stationary, the
+encoder counts will always read zero. In this project, the encoder
+information was requested at roughly 40Hz, close to the scan rate of the
+lidar. Each encoder request is time-stamped so that it can be properly
+synchronized with lidar data.
+
+In order to calculate the travelled distance for a single wheel, the
+encoder counts should be accumulated over time. Essentially, a single
+count translates directly to X meters travelled (depending on resolution
+of the encoder and wheel diameter). So if we had five consecutive
+encoder measurements of a single wheel equal to
+[0, 1, 0, -2,3], the wheel has travelled a net distance of 2*X (if we
+make a simplifying assumption that the wheel motion is restricted to one
+dimension just for this small example).
+
+There are 360 ticks per revolution
