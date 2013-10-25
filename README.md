@@ -3,6 +3,8 @@ matlab_slam
 
 Scan-matching / Particle Filter SLAM from ESE650 
 
+![scan_matching_success](figures/test20_new.png)
+
 
 to initialize workspace
 ```
