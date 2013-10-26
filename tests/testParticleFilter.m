@@ -7,7 +7,7 @@
 
 
 %% Load in data
-dat = load_measurements(21);
+dat = load_measurements(24);
 
 %% World Configuration
 
@@ -43,7 +43,7 @@ cfg.num_thetas = 10;
 
 %% Particle Filter Configuration
 particles.count = 100;
-particles.variance = [2.0, 1.0];
+particles.variance = [1.0, 0.5];
 %particles.variance = [0.5, 0.5];
 particles.state = zeros(particles.count,3);
 particles.lidar_hits = {};
@@ -110,7 +110,7 @@ figure(1)
 
 %% Init
 
-start_ind = 800;
+start_ind = 250;
 
 state = [0 0 0];
 ts0 = lidar.ts(start_ind);
@@ -131,7 +131,7 @@ drawnow();
 %% Sample noise distributions to create v,w for each particle
 % Variance [vel, w]
 % Get vel,w
-for ind = start_ind:2500
+for ind = start_ind:4000
     [vel, w, dt] = get_vel( ind, dat, cfg );
 
     % Generate vel,w samples for each particle
@@ -139,11 +139,12 @@ for ind = start_ind:2500
     [pgrad] = normrnd(repmat([0.0 0.0], particles.count, 1), repmat(particles.variance, particles.count, 1));
     
     % Calculate probability of each sample
-    %{
+    
     sample_probs = normpdf( repmat(particles.variance, particles.count, 1), pgrad );
-    log_sample_probs = sum(log(sample_probs./(1-sample_probs)),2);
-    particles.cost = particles.cost + log_sample_probs;
-    %}
+    log_sample_probs = sum(log(sample_probs),2);
+    %log_sample_probs = sum(log(sample_probs./(1-sample_probs)),2);
+    particles.cost = log_sample_probs;
+    
     
     pvel = pgrad(:,1) + vel;
     pw = pgrad(:,2) + w;
