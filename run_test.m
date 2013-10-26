@@ -4,7 +4,7 @@ function res = run_test( test_num )
     dat = load_measurements( test_num );
 
     %% World Configuration
-    world.resolution = 0.1;
+    world.resolution = 0.05;
     world.width = 75;
     world.size = [world.width world.width]./world.resolution;
     world.center = world.size./2;
@@ -26,8 +26,8 @@ function res = run_test( test_num )
     cfg.unknown = log(0.5/0.5);
 
     cfg.search_range = world.resolution*2;
-    cfg.theta_range = 0.1;
-    cfg.num_thetas = 10;
+    cfg.theta_range = 0.25;
+    cfg.num_thetas = 25;
 
     %% For plotting
     vec = [0 0 1; 0 1 1; 0 0 1; 1 0 1]';

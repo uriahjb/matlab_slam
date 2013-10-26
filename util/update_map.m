@@ -3,8 +3,9 @@
 %}
 function world = update_map( ind, state, lidar, world, cfg )
     
-    lidar_hits = tform_scan( state, lidar.ranges(:,ind), lidar.norm );
-    
+    lidar_hits = tform_scan( state, lidar.ranges(:,ind), lidar.norm );    
+    dists = sqrt(sum(lidar_hits(1:2,:).^2));
+                    
     state_inds = double(int32(1/world.resolution*state(1:2)) + int32(world.center));
         
     lidar_cell_hits = bsxfun( @plus, int32(1/world.resolution*lidar_hits(1:2,:)), int32(world.center') );
@@ -15,7 +16,7 @@ function world = update_map( ind, state, lidar, world, cfg )
     
     %% Apply probabilities to map
     
-    hit_inds = sub2ind( world.size, lidar_cell_hits(1,:), lidar_cell_hits(2,:) );
+    hit_inds = sub2ind( world.size, lidar_cell_hits(1,:), lidar_cell_hits(2,:) );    
     ray_inds = sub2ind( world.size, rays_ix, rays_iy );
 
     % Find unique ray_inds that are not in hit_inds
@@ -28,6 +29,10 @@ function world = update_map( ind, state, lidar, world, cfg )
     world.map(ray_inds) = max( min( world.map(ray_inds)-cfg.log_hit, cfg.confidence_thresh ) ...
                              , -cfg.confidence_thresh); 
     
+    % Remove hit values where the distance is greater than max_dist
+    max_dist = 26;
+    hit_inds = hit_inds( dists < max_dist );
+                         
     % Add hit probabilities
     % Bound map values by max-min confidence thresholds
     world.map(hit_inds) = max(min(world.map(hit_inds)+2.0*cfg.log_hit, cfg.confidence_thresh) ...

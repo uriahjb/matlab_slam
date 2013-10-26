@@ -25,7 +25,7 @@ particles.cost = normpdf( x, 0.0, 1.0 );
 figure(1)
 plot( 1:particles.count, particles.cost );
 
-%% Resampling Algorithm
+%% Highly Randomized Resampling Algorithm
 [sorted_pc, inds_pc] = sort(particles.cost);
 parents_nrmd = sorted_pc/sum(sorted_pc);
 parents_nrmd = parents_nrmd';
@@ -78,3 +78,23 @@ particles.cost(children_idx) = particles.cost(parent_idx);
 particles.lidar_hits(children_idx) = particles.lidar_hits(parent_idx);
 disp(['Resample: ' num2str(ind)]);
 %}
+
+%% Systematic Resampling Algorithm
+weights = cumsum(parents_nrmd);
+% Compute normalizing factor
+step = 1/particles.count;
+% Compute random starting point
+start = step*rand(1);
+% Compute selection points
+selection_points = start:step:(state+particles.count*step);
+j = 1;
+ind_list = [];
+for i = 1:particles.count
+    while selection_points(i) > weights(j)
+        j = j+1;
+    end
+    ind_list = [ind_list j];
+end
+    
+figure(3)
+hist( inds_pc(ind_list) );
