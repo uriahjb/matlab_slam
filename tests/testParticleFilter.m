@@ -7,7 +7,7 @@
 
 
 %% Load in data
-dat = load_measurements(24);
+dat = load_measurements(20);
 
 %% World Configuration
 
@@ -16,7 +16,7 @@ p_confidence_thresh = 0.9999;
 unknown = log(0.5/0.5);
 
 world.resolution = 0.05;
-world.width = 60;
+world.width = 80;
 world.size = [world.width world.width]./world.resolution;
 world.center = world.size./2;
 world.map = ones(world.size)*unknown; % initialize map as unknown
@@ -27,7 +27,7 @@ cnt_to_rad = 1/360;
 
 cfg = struct();
 cfg.imu_scl = 1050/1023*pi/180;
-cfg.imu_bias = 369.75;
+cfg.imu_bias = 372.0;
 cfg.cnt_to_vel = 8.0*wheel_circ*cnt_to_rad;
 
 p_hit = 0.53;
@@ -42,8 +42,8 @@ cfg.theta_range = 0.1;
 cfg.num_thetas = 10;
 
 %% Particle Filter Configuration
-particles.count = 100;
-particles.variance = [1.0, 0.5];
+particles.count = 50;
+particles.variance = [1.0, 0.3];
 %particles.variance = [0.5, 0.5];
 particles.state = zeros(particles.count,3);
 particles.lidar_hits = {};
@@ -62,6 +62,7 @@ num_scans = length(lidar.angles);
 
 ranges_norm = [ones(length(lidar.angles),1) zeros(length(lidar.angles),1)];
 lidar.norm = cell2mat(arrayfun( @(j) lidar_rots(:,:,j)*ranges_norm(j,:)', 1:length(lidar.angles), 'UniformOutput', false ));
+lidar.max_range = 26.0;
 
 %% For drawing trajectory, current position and map
 figure(1)
@@ -138,13 +139,11 @@ for ind = start_ind:4000
     %[pgrad] = normrnd(repmat([vel w], particles.count, 1), repmat(particles.variance, particles.count, 1));
     [pgrad] = normrnd(repmat([0.0 0.0], particles.count, 1), repmat(particles.variance, particles.count, 1));
     
-    % Calculate probability of each sample
-    
+    % Calculate probability of each sample    
     sample_probs = normpdf( repmat(particles.variance, particles.count, 1), pgrad );
     log_sample_probs = sum(log(sample_probs),2);
     %log_sample_probs = sum(log(sample_probs./(1-sample_probs)),2);
-    particles.cost = log_sample_probs;
-    
+    particles.cost = log_sample_probs;    
     
     pvel = pgrad(:,1) + vel;
     pw = pgrad(:,2) + w;
@@ -160,18 +159,34 @@ for ind = start_ind:4000
     %% Draw lidar hits for each particle
     [i,j] = ind2sub( [num_tiles, num_tiles], 1:particles.count);
     i = 2*(i-1)*world.center(1);
-    j = 2*(j-1)*world.center(2);
-
+    j = 2*(j-1)*world.center(2);   
+    
     hit_costs = zeros(particles.count, 1);
     
     % Create single lidar hits array for all particles
     lidar_hits = cat(2,particles.lidar_hits{:});
+    
+    % Create mask indicating which lidar values to ignore    
+    ignore_msk = repmat(lidar.ranges(:,ind) > lidar.max_range, particles.count, 1);
+    
+    %dists = sqrt(sum(lidar_hits(1:2,:).^2));
+    
     % Convert to world coords
     lidar_hits_map = 1/world.resolution*lidar_hits;
     lidar_hits_map(1,:) = lidar_hits_map(1,:) + world.center(1);
     lidar_hits_map(2,:) = lidar_hits_map(2,:) + world.center(2);
     %TODO: I can save time here by sampling from a subset of the world map
-    hit_values = interp2( world.map, lidar_hits_map(2,:), lidar_hits_map(1,:), 'nearest' );
+    %{
+    % Calculate subset of map to look at ... note: need to shift lidar hits
+    as well
+    border_size = 10;
+    min_x = floor(min( lidar_hits_map(1,:) )) - border_size;
+    max_x = ceil(max( lidar_hits_map(1,:) )) + border_size;
+    min_y = floor(min( lidar_hits_map(2,:) )) - border_size;
+    max_y = ceil(max( lidar_hits_map(2,:) )) + border_size;
+    %}
+    hit_values = interp2( world.map, lidar_hits_map(2,:), lidar_hits_map(1,:), 'cubic' );
+    hit_values( ignore_msk ) = 0.0;
     % y = x/(1 + x)  x = logprob, y = prob
     particles.hit_cost = sum(reshape(hit_values, 1081, particles.count),1)'/length(lidar.angles);        
     prob_hit_cost = exp(particles.hit_cost)./(1+exp(particles.hit_cost));    
@@ -243,7 +258,7 @@ for ind = start_ind:4000
     %map_grid = repmat( scl*(world.map+cfg.confidence_thresh), int16(sqrt(particles.count)), int16(sqrt(particles.count)) );
     %set(im,'CData', map_grid)         
     
-    if ~mod(ind, 15)
+    if ~mod(ind, 30)
 
         set(im,'CData', scl*(world.map+cfg.confidence_thresh))   
 
@@ -273,7 +288,7 @@ for ind = start_ind:4000
         % Compute random starting point
         start = step*rand(1);
         % Compute selection points
-        selection_points = start:step:(state+particles.count*step);
+        selection_points = start:step:(start+particles.count*step);
         j = 1;
         idx = [];
         for i = 1:particles.count
@@ -282,15 +297,14 @@ for ind = start_ind:4000
             end
             idx = [idx j];
         end
-        parent_idx = inds_pc( idx );
+        parent_idx = inds_pc( idx );        
         
         % Copy particle values over
         particles.state = particles.state(parent_idx,:);
         particles.hit_cost = particles.hit_cost(parent_idx);
         particles.cost = particles.cost(parent_idx);
         particles.lidar_hits = particles.lidar_hits(parent_idx);
-        
-        
+                
         %{
         Very Random resampling
         %parents_nrmd = sorted_pc;        

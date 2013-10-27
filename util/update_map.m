@@ -4,7 +4,7 @@
 function world = update_map( ind, state, lidar, world, cfg )
     
     lidar_hits = tform_scan( state, lidar.ranges(:,ind), lidar.norm );    
-    dists = sqrt(sum(lidar_hits(1:2,:).^2));
+    %dists = sqrt(sum(lidar_hits(1:2,:).^2));
                     
     state_inds = double(int32(1/world.resolution*state(1:2)) + int32(world.center));
         
@@ -29,9 +29,8 @@ function world = update_map( ind, state, lidar, world, cfg )
     world.map(ray_inds) = max( min( world.map(ray_inds)-cfg.log_hit, cfg.confidence_thresh ) ...
                              , -cfg.confidence_thresh); 
     
-    % Remove hit values where the distance is greater than max_dist
-    max_dist = 26;
-    hit_inds = hit_inds( dists < max_dist );
+    % Remove hit values where the distance is greater than max_dist    
+    hit_inds = hit_inds( lidar.ranges(:,ind) < lidar.max_range );
                          
     % Add hit probabilities
     % Bound map values by max-min confidence thresholds
