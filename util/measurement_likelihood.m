@@ -23,7 +23,8 @@ function [particles, measurement_log_likelihood] = measurement_likelihood( ind, 
     % Ignore values from non-lidar hits ... not sure how justified this is
     hit_values( ignore_msk ) = 0.0;
     % y = x/(1 + x)  x = logprob, y = prob
-    particles.hit_cost = sum(reshape(hit_values, length(lidar.angles), particles.count),1)'/length(lidar.angles);        
+    particles.hit_cost = sum(reshape(hit_values, length(lidar.angles), particles.count),1)'/length(lidar.angles);            
     prob_hit_cost = exp(particles.hit_cost)./(1+exp(particles.hit_cost));    
     measurement_log_likelihood = log( prob_hit_cost/sum(prob_hit_cost) );   
+    
 end

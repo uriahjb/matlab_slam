@@ -3,11 +3,11 @@
 %}
 
 %% Load in data
-dat = load_measurements(20);
+dat = load_measurements(23);
 
 %% World Configuration
 
-p_confidence_thresh = 0.9999;
+p_confidence_thresh = 0.99999;
 unknown = log(0.5/0.5);
 
 world.resolution = 0.05;
@@ -25,7 +25,7 @@ cfg.imu_scl = 1050/1023*pi/180;
 cfg.imu_bias = 370.0;
 cfg.cnt_to_vel = 8.0*wheel_circ*cnt_to_rad;
 
-p_hit = 0.52;
+p_hit = 0.55;
 p_miss = 1 - p_hit;
 cfg.log_hit = log(p_hit/p_miss);
 cfg.confidence_thresh = log(p_confidence_thresh/(1-p_confidence_thresh));
@@ -37,7 +37,7 @@ cfg.num_thetas = 10;
 
 %% Particle Filter Configuration
 particles.count = 100;
-particles.variance = [1.0, 0.25];
+particles.variance = [1.0, 1.0];
 particles.state = zeros(particles.count,3);
 particles.lidar_hits = {};
 particles.hit_cost = zeros(particles.count,1);

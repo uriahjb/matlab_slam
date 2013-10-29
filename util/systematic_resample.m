@@ -37,6 +37,12 @@ function particles = systematic_resample( particles )
     particles.state = particles.state(parent_idx,:);
     particles.hit_cost = particles.hit_cost(parent_idx);
     %particles.cost = particles.cost(parent_idx);
-    particles.cost = ones(particles.count,1)/particles.count;
+    particles.cost = log(ones(particles.count,1)/particles.count);
+    particles.normalization = sum( particles.cost );
+    
     particles.lidar_hits = particles.lidar_hits(parent_idx);
+    
+    parent_idx
+    %particles.world = particles.world{parent_idx};
+    particles.world(:) = particles.world(parent_idx)
 end

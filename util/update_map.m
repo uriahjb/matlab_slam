@@ -26,8 +26,10 @@ function world = update_map( ind, state, lidar, world, cfg )
     % Here I should try to convert to an int8 map instead of everywhere else
     %map_int8 = int8(256/(2*cfg.confidence_thresh).*map);
     % Subtract miss probabilities
+    
     world.map(ray_inds) = max( min( world.map(ray_inds)-cfg.log_hit, cfg.confidence_thresh ) ...
                              , -cfg.confidence_thresh); 
+    
     
     % Remove hit values where the distance is greater than max_dist    
     hit_inds = hit_inds( lidar.ranges(:,ind) < lidar.max_range );
