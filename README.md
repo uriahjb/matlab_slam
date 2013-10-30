@@ -2,6 +2,8 @@ matlab_slam
 ===========
 
 Scan-matching / Particle Filter SLAM from ESE650 
+![dynamic_map_mcl](figures/mcl_slam_loop_closure_success.png)
+
 
 ![scan_matching_success](figures/test20_new.png)
 
