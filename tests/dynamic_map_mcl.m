@@ -3,7 +3,7 @@
 %}
 
 %% Load in data
-dat = load_measurements(23);
+dat = load_measurements(20);
 
 %% World Configuration
 
@@ -22,10 +22,10 @@ cnt_to_rad = 1/360;
 
 cfg = struct();
 cfg.imu_scl = 1050/1023*pi/180;
-cfg.imu_bias = 370.0;
-cfg.cnt_to_vel = 8.0*wheel_circ*cnt_to_rad;
+cfg.imu_bias = 370.3;
+cfg.cnt_to_vel = 7.7*wheel_circ*cnt_to_rad;
 
-p_hit = 0.55;
+p_hit = 0.51;
 p_miss = 1 - p_hit;
 cfg.log_hit = log(p_hit/p_miss);
 cfg.confidence_thresh = log(p_confidence_thresh/(1-p_confidence_thresh));
@@ -36,8 +36,8 @@ cfg.theta_range = 0.1;
 cfg.num_thetas = 10;
 
 %% Particle Filter Configuration
-particles.count = 100;
-particles.variance = [1.0, 1.0];
+particles.count = 50;
+particles.variance = [2.0, 1.0];
 particles.state = zeros(particles.count,3);
 particles.lidar_hits = {};
 particles.hit_cost = zeros(particles.count,1);
@@ -93,26 +93,26 @@ for ind = start_ind:4000
     % Previous state used in plotting
     prev_state = particles.state;
     
-    % Sample motion model distribution for each particle
+    % Sample motion model distribution for each particle    
     [particles, motion_log_likelihood] = sample_particle_motion( ind, particles, vel, w, dt );
         
     % Update particle weights given motion log-likelihoods
-    %particles.cost = motion_log_likelihood;    
+    particles.cost = particles.cost + motion_log_likelihood;       
     
     % Calculate likelihood of particle given measurements
     [particles, measurement_log_likelihood] = measurement_likelihood( ind, particles, lidar, world );        
-    % Update particle weights with measurement likelihoods
-    particles.cost = measurement_log_likelihood;
+    % Update particle weights with measurement likelihoods    
+    particles.cost = particles.cost + measurement_log_likelihood;
     
     % Update world using hypothesis from most likely particle
     [~, mx_idx] = max(particles.cost);
     world = update_map( ind, particles.state(mx_idx,:), lidar, world, cfg );        
 
     % Calculate Neff
-    Neff = calculate_neff( particles );    
+    Neff = calculate_neff( particles )
     
     % Resample particles if necessary 
-    if Neff < particles.count/2
+    if Neff < particles.count/4
         particles = systematic_resample( particles );
     end
 

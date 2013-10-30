@@ -10,7 +10,7 @@
 %}
 
 function particles = systematic_resample( particles )
-    cost_normalized = exp( particles.cost - min(particles.cost) );
+    cost_normalized = exp( particles.cost - max(particles.cost) );
     cost_normalized = cost_normalized/sum(cost_normalized);
     [sorted_pc, inds_pc] = sort(cost_normalized);
     parents_nrmd = sorted_pc/sum(sorted_pc);
@@ -41,8 +41,7 @@ function particles = systematic_resample( particles )
     particles.normalization = sum( particles.cost );
     
     particles.lidar_hits = particles.lidar_hits(parent_idx);
-    
-    parent_idx
+        
     %particles.world = particles.world{parent_idx};
-    particles.world(:) = particles.world(parent_idx)
+    %particles.world(:) = particles.world(parent_idx)
 end

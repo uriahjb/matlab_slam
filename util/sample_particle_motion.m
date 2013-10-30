@@ -14,6 +14,7 @@ function [particles, motion_log_likelihood] = sample_particle_motion( ind, parti
     % Calculate probability of each sample    
     sample_probs = normpdf( repmat(particles.variance, particles.count, 1), pgrad );
     motion_log_likelihood = sum(log(sample_probs),2);
+    particles.normalization = particles.normalization + sum(motion_log_likelihood);
     
     pvel = pgrad(:,1) + vel;
     pw = pgrad(:,2) + w;

@@ -7,10 +7,10 @@ dat = load_measurements(20);
 
 %% World Configuration
 
-p_confidence_thresh = 0.99999;
+p_confidence_thresh = 0.9999;
 unknown = log(0.5/0.5);
 
-world.resolution = 0.2;
+world.resolution = 0.05;
 world.width = 70;
 world.size = [world.width world.width]./world.resolution;
 world.center = world.size./2;
@@ -25,19 +25,16 @@ cfg.imu_scl = 1050/1023*pi/180;
 cfg.imu_bias = 370.0;
 cfg.cnt_to_vel = 8.0*wheel_circ*cnt_to_rad;
 
-p_hit = 0.52;
+p_hit = 0.51;
 p_miss = 1 - p_hit;
 cfg.log_hit = log(p_hit/p_miss);
 cfg.confidence_thresh = log(p_confidence_thresh/(1-p_confidence_thresh));
 cfg.unknown = unknown;
 
-cfg.search_range = world.resolution*4;
-cfg.theta_range = 0.1;
-cfg.num_thetas = 10;
 
 %% Particle Filter Configuration
-particles.count = 100;
-particles.variance = [0.5, 0.1];
+particles.count = 25;
+particles.variance = [0.5, 0.3];
 %particles.variance = [1.0, 0.2];
 particles.state = zeros(particles.count,3);
 particles.lidar_hits = {};
@@ -140,6 +137,7 @@ for ind = start_ind:4000
     if ~mod(ind, 30)
         % Update map_grid with each particles map
         [~, psrt] = sort( particles.cost, 'descend' );
+        
         [i,j] = ind2sub( [num_tiles, num_tiles], 1:particles.count );
         for pidx = 1:particles.count            
             map_grid( i(pidx)*world.size(1)-world.size(1)+1:world.size(1)*i(pidx) ...
