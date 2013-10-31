@@ -10,7 +10,8 @@
 %}
 
 function particles = systematic_resample( particles )
-    cost_normalized = exp( particles.cost - max(particles.cost) );
+    %cost_normalized = exp( particles.cost - max(particles.cost) );
+    cost_normalized = exp( particles.cost );
     cost_normalized = cost_normalized/sum(cost_normalized);
     [sorted_pc, inds_pc] = sort(cost_normalized);
     parents_nrmd = sorted_pc/sum(sorted_pc);
